@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.external_api.router import router as external_router
+from external_api.router import router as external_router
 
 app = FastAPI(
     title="Azure Storage + External API",
