@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from external_api.router import router as external_router
+from src.external_api.router import router as external_router
 
 app = FastAPI(
     title="Azure Storage + External API",
@@ -8,7 +8,7 @@ app = FastAPI(
 )
 
 
-app.include_router(external_router)       # наш новий модуль
+app.include_router(external_router, prefix="/external")      
 
 @app.get("/")
 def root():
