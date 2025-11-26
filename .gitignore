@@ -1,0 +1,8 @@
+# coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# compiled python
+__pycache__/
+*.pyc

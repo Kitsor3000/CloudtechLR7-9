@@ -1,11 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
-from src.database.base import Base
 import src.users.models  # ІМПОРТУЄМО ВСІ МОДЕЛІ, щоб Alembic бачив таблиці
-
+from src.database.base import Base
 from src.settings import settings  # <-- ТВОЇ НАЛАШТУВАННЯ
 
 # Конфіг Alembic (зчитує alembic.ini)
