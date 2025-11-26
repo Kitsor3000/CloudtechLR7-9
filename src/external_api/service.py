@@ -1,50 +1,21 @@
-import requests
-from src.external_api.models import CatFactModel, CatImageModel, CatCombinedModel
+import httpx
+from src.redis.session import redis_client
 
+class ExternalService:
 
-class CatService:
-    """Services to get image and fact about cat"""
+    @staticmethod
+    async def get_cat():
+        cached = await redis_client.get("cat_cached")
 
-    fact_url: str = "https://catfact.ninja/fact"
-    image_url: str = "https://api.thecatapi.com/v1/images/search"
+        if cached:
+            return {"cached": True, "data": eval(cached)}
 
-    def get_raw_fact(self) -> dict:
-        """Повертає сирі дані з Cat Facts API (для /external/data)."""
-        response = requests.get(self.fact_url, timeout=10)
-        response.raise_for_status()
-        return response.json()
+        async with httpx.AsyncClient() as client:
+            fact = (await client.get("https://catfact.ninja/fact")).json()
+            img = (await client.get("https://api.thecatapi.com/v1/images/search")).json()
 
-    def get_raw_image(self) -> dict:
-        """Повертає сирі дані з The Cat API (для /external/data)."""
-        response = requests.get(self.image_url, timeout=10)
-        response.raise_for_status()
-        return response.json()
+        result = {"fact": fact, "image": img}
 
-    def get_cat_fact(self) -> CatFactModel:
-        """
-        Fetch a random cat fact from catfact.ninja API.
-        :return: CatFactModel with fact text and its length.
-        """
-        data = self.get_raw_fact()
-        return CatFactModel(**data)
+        await redis_client.set("cat_cached", str(result), ex=30)  # TTL 30 sec
 
-    def get_cat_image(self) -> CatImageModel:
-        """
-        Fetch a random cat image from thecatapi.com API.
-        :return: CatImageModel with image URL.
-        """
-        data = self.get_raw_image()
-        # thecatapi.com повертає список
-        return CatImageModel(url=data[0]["url"])
-
-    def get_cat_info(self) -> CatCombinedModel:
-        """
-        Combine cat fact and image into a single model.
-        :return: CatCombinedModel containing fact and image URL.
-        """
-        fact: CatFactModel = self.get_cat_fact()
-        image: CatImageModel = self.get_cat_image()
-        return CatCombinedModel(fact=fact.fact, image_url=image.url)
-
-
-service = CatService()
+        return {"cached": False, "data": result}
